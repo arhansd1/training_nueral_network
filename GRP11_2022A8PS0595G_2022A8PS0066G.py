@@ -1,23 +1,23 @@
 """
-GRP11_2022A8PS0595G.py
-══════════════════════════════════════════════════════════════════════
+GRP11_2022A8PS0595G_2022A8PS0066G.py
 Assignment 1 — Understanding Hidden Layer Representations (MNIST)
 BITS F312 Neural Networks
 
 Architecture : [784 → 20 → 10]
-Trained with : SGD, 30 epochs, mini-batch=10, eta=3.0
-Model loaded from: model.json (no retraining)
+Trained with stochastic gradient descent (SGD) -  30 epochs, mini-batch=10, eta=3.0
+Model loaded from: GRP11_2022A8PS0595G_2022A8PS0066G.json (no retraining)
 
-Usage:
-    python GRP11_2022A8PS0595G.py
 
-Requires in the same directory:
-    mnist_loader.py
-    model.json
+First get these files in the same folder (pre-requisites)
+    mnist_loader.py - (from NN deep learning repo)
+    GRP11_2022A8PS0595G_2022A8PS0066G.json      - (pretrained model weights)
     train-images.idx3-ubyte
     train-labels.idx1-ubyte
     t10k-images.idx3-ubyte
     t10k-labels.idx1-ubyte
+
+then run 
+python GRP11_2022A8PS0595G_2022A8PS0066G.py
 """
 
 import json
@@ -27,45 +27,39 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import mnist_loader
 
-# ══════════════════════════════════════════════════════════════════════
-# ▶▶  SET YOUR FAVORITE NEURON HERE (1 to 20)
-FAVORITE_NEURON = 14        # ← change this to whichever neuron you like
-# ══════════════════════════════════════════════════════════════════════
+favourite_nueron = 6       
 
-# Informal names for all 20 neurons (based on Task 1 + Task 2 analysis)
+
 NEURON_NAMES = {
-    1:  "Curved multi-stroke detector",
-    2:  "Vertical stroke detector",
-    3:  "Open arc / tall shape detector",
-    4:  "Closed oval loop detector",
-    5:  "Cross-junction detector",
-    6:  "Diagonal slash detector",
-    7:  "Round loop detector",
-    8:  "S-curve / swirl detector",
-    9:  "Seven detector (variant A)",
-    10: "Round + looping shape detector",
-    11: "Two detector",
-    12: "Double-arc detector",
-    13: "Bottom-loop + sweep detector",
-    14: "Seven detector (variant B)",
-    15: "Broad mixed-stroke detector",
-    16: "Closed oval detector",
-    17: "S/Z-shape detector",
-    18: "Six detector",
-    19: "Five detector",
-    20: "Slanted multi-curve detector",
+    1:  "Left legged",
+    2:  "Central line",
+    3:  "Bindhi",
+    4:  "Donut",
+    5:  "Square",
+    6:  "Hockey stick",
+    7:  "Thick donut",
+    8:  "Scramble",
+    9:  "Grandpa stick",
+    10: "Right legged",
+    11: "Captain Hook",
+    12: "The E",
+    13: "Hangman noose",
+    14: "Stroked 7",
+    15: "Equator",
+    16: "Black hole",
+    17: "Scrambled",
+    18: "Bottom loop",
+    19: "Seahorse",
+    20: "The Sun",
 }
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Utilities
-# ══════════════════════════════════════════════════════════════════════
 
 def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
 
 
-def load_model(json_path="model.json"):
+def load_model(json_path="GRP11_2022A8PS0595G_2022A8PS0066G.json"):
     with open(json_path, "r") as f:
         model = json.load(f)
     weights = [np.array(w) for w in model["weights"]]
@@ -74,7 +68,6 @@ def load_model(json_path="model.json"):
 
 
 def get_hidden_activations(test_data, W1, b1):
-    """Returns activations (N,20), labels (N,), images list."""
     activations, labels, images = [], [], []
     for x, y in test_data:
         z1 = W1 @ x + b1
@@ -85,16 +78,13 @@ def get_hidden_activations(test_data, W1, b1):
     return np.array(activations), np.array(labels), images
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Task 1 — Weight heatmaps
-# ══════════════════════════════════════════════════════════════════════
+# TASK 1 - Visualise each hidden neurons weight in HeatMap.
 
 class Task1:
-    """Visualise each hidden neuron's 784 weights as a 28×28 heatmap."""
+ 
 
     @staticmethod
     def run_all(W1, save_path="task1_heatmaps.png"):
-        """Plot all 20 neurons in a 4×5 grid and save."""
         fig, axes = plt.subplots(4, 5, figsize=(14, 11))
         fig.suptitle("Task 1 — Hidden Neuron Weight Heatmaps\n"
                      "(Red = excitatory, Blue = inhibitory)", fontsize=14, y=1.01)
@@ -112,8 +102,7 @@ class Task1:
 
     @staticmethod
     def run_single(W1, neuron_idx, save_path=None):
-        """Plot heatmap for one neuron (0-indexed internally)."""
-        j    = neuron_idx - 1           # convert 1-indexed → 0-indexed
+        j    = neuron_idx - 1           # change  1-indexed → 0-indexed if needed
         w_j  = W1[j].reshape(28, 28)
         vmax = np.max(np.abs(w_j))
 
@@ -131,22 +120,18 @@ class Task1:
         print(f"  [Task 1] Saved: {path}")
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Task 2 — Top-8 activating images
-# ══════════════════════════════════════════════════════════════════════
+
+# Task 2 — Top-8 activating images.
 
 class Task2:
-    """Find and display the 8 images that most strongly activate each neuron."""
 
     @staticmethod
     def run_all(activations, labels, images):
-        """Save one 2×4 grid per neuron (20 files total)."""
         for j in range(activations.shape[1]):
             Task2._plot_neuron(j + 1, activations, labels, images)
 
     @staticmethod
     def run_single(neuron_idx, activations, labels, images, save_path=None):
-        """Plot top-8 grid for one neuron."""
         Task2._plot_neuron(neuron_idx, activations, labels, images, save_path)
 
     @staticmethod
@@ -174,16 +159,12 @@ class Task2:
         print(f"  [Task 2] Saved: {path}")
 
 
-# ══════════════════════════════════════════════════════════════════════
-# Task 3 — Activation distribution per digit class
-# ══════════════════════════════════════════════════════════════════════
+# Task 3 — Activation distribution per digit class.
 
 class Task3:
-    """Bar chart of average neuron activation for each digit class 0–9."""
 
     @staticmethod
     def run_all(activations, labels, save_path="task3_activation_distribution.png"):
-        """Save combined 4×5 figure for all 20 neurons."""
         digits = np.arange(10)
         fig, axes = plt.subplots(4, 5, figsize=(18, 13))
         fig.suptitle("Task 3 — Average Hidden Neuron Activation per Digit Class",
@@ -213,7 +194,6 @@ class Task3:
 
     @staticmethod
     def run_single(neuron_idx, activations, labels, save_path=None):
-        """Bar chart for one neuron."""
         j      = neuron_idx - 1
         digits = np.arange(10)
         avg    = np.array([activations[labels == d, j].mean() for d in digits])
@@ -241,44 +221,34 @@ class Task3:
         plt.close()
         print(f"  [Task 3] Saved: {path}")
 
+# main() — runs ONLY the favorite neuron. Our selected nueron is 6
 
-# ══════════════════════════════════════════════════════════════════════
-# main() — runs ONLY the favorite neuron, completes in < 10 seconds
-# ══════════════════════════════════════════════════════════════════════
 
 def main():
-    n = FAVORITE_NEURON
+    n = favourite_nueron
     print(f"\n{'='*55}")
     print(f"  Favorite Neuron : {n}  —  {NEURON_NAMES[n]}")
     print(f"{'='*55}\n")
 
-    # 1. Load model (no retraining)
-    print("Loading model from model.json ...")
-    weights, biases = load_model("model.json")
-    W1, W2 = weights
-    b1, b2 = biases
+    print("Loading model")
+    weights, biases = load_model("GRP11_2022A8PS0595G_2022A8PS0066G.json")
+    W1 = weights
+    b1 = biases
 
-    # 2. Load test data
-    print("Loading MNIST test data ...")
     _, _, test_data = mnist_loader.load_data_wrapper()
 
-    # 3. Compute hidden activations
-    print("Computing hidden layer activations ...")
     activations, labels, images = get_hidden_activations(test_data, W1, b1)
 
-    # 4. Task 1 — weight heatmap for favorite neuron
-    print(f"\n── Task 1: Weight heatmap for Neuron {n} ──")
+    print(f"\n─> Task 1: Weight heatmap for Neuron {n} ──")
     Task1.run_single(W1, n)
 
-    # 5. Task 2 — top-8 activating images for favorite neuron
-    print(f"\n── Task 2: Top-8 activating images for Neuron {n} ──")
+    print(f"\n─> Task 2: Top-8 activating images for Neuron {n} ──")
     Task2.run_single(n, activations, labels, images)
 
-    # 6. Task 3 — activation bar chart for favorite neuron
-    print(f"\n── Task 3: Activation distribution for Neuron {n} ──")
+    print(f"\n─> Task 3: Activation distribution for Neuron {n} ──")
     Task3.run_single(n, activations, labels)
 
-    print(f"\n✓ Done! Output files:")
+    print(f"\n Output files:")
     print(f"  task1_neuron_{n:02d}.png")
     print(f"  task2_neuron_{n:02d}.png")
     print(f"  task3_neuron_{n:02d}.png")
